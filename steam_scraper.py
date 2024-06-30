@@ -1,5 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
+import pandas
+
 
 def parse_steam_comments(profile_id, pagesize):
     url = f"https://steamcommunity.com/comment/Profile/render/{profile_id}/-1/"
@@ -50,13 +52,12 @@ def parse_steam_comments(profile_id, pagesize):
 
     return all_comments
 
-profile_id = '76561199007468523'
-pagesize = 20
-comments = parse_steam_comments(profile_id, pagesize)
 
-for idx, comment in enumerate(comments, start=1):
-    print(f"Comment {idx}:")
-    print(f"Username: {comment['username']}")
-    print(f"Time: {comment['time']}")
-    print(f"Comment: {comment['comment']}")
-    print('-'*20)
+
+
+# for idx, comment in enumerate(comments, start=1):
+#     print(f"Comment {idx}:")
+#     print(f"Username: {comment['username']}")
+#     print(f"Time: {comment['time']}")
+#     print(f"Comment: {comment['comment']}")
+#     print('-'*20)
