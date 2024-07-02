@@ -2,19 +2,24 @@ import requests
 from bs4 import BeautifulSoup
 import pandas
 
-
-def parse_steam_comments(profile_id, pagesize):
+def parse_steam_comments(profile_id, pagesize, limit):
     url = f"https://steamcommunity.com/comment/Profile/render/{profile_id}/-1/"
     params = {
         'start': 0,
         'total_count': pagesize
     }
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    }
+
+
     all_comments = []
 
     while True:
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        }
+
+        if len(all_comments) >= limit:
+            break
+
         response = requests.get(url, params=params, headers=headers)
         if response.status_code != 200:
             print(f"Error fetching comments: {response.status_code}")
@@ -34,10 +39,15 @@ def parse_steam_comments(profile_id, pagesize):
                 timestamp_element = comment.find('span', class_='commentthread_comment_timestamp')
                 time = timestamp_element['title'] if timestamp_element else 'Unknown'
 
+                avatar_element = comment.find('img')
+                avatar_url = avatar_element['src'] if avatar_element else 'https://avatars.steamstatic.com/b5bd56c1aa4644a474a2e4972be27ef9e82e517e_full.jpg'
+
+
                 comment_data = {
                     'username': username,
                     'time': time,
-                    'comment': comment_text.get_text(strip=True)
+                    'comment': comment_text.get_text(strip=True),
+                    'avatar_url': avatar_url,
                 }
                 all_comments.append(comment_data)
 
