@@ -56,15 +56,3 @@ def parse_steam_comments(profile_id, pagesize):
 def export_to_excel(comments):
     df = pandas.DataFrame(comments)
     df.to_excel('steam_comments.xlsx', index=False)
-
-
-# comments = parse_steam_comments('76561199007468523', 20)
-
-
-
-# for idx, comment in enumerate(comments, start=1):
-#     print(f"Comment {idx}:")
-#     print(f"Username: {comment['username']}")
-#     print(f"Time: {comment['time']}")
-#     print(f"Comment: {comment['comment']}")
-#     print('-'*20)
