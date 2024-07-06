@@ -1,7 +1,7 @@
 import flet as ft
 import threading
-from scraper import export_to_excel, parse_steam_comments
 import time
+from scraper import export_to_excel, parse_steam_comments, customurl_to_steamid64
 
 class Message:
     def __init__(self, user_name: str, time: str, text: str, avatar_url: str):
@@ -37,7 +37,7 @@ def main(page: ft.Page):
     page.window.height = 800
 
     profile_id_input = ft.TextField(label="Steam Profile ID", width=300)
-    limit_input = ft.TextField(label="Limit", width=100, value="10")
+    limit_input = ft.TextField(label="Limit", width=100)
     start_button = ft.ElevatedButton(text="Start", on_click=lambda e: start_parsing(e, page))
     export_button = ft.ElevatedButton(text="Export to Excel", on_click=lambda e: export_to_excel_file(), disabled=True)
     loading_indicator = ft.ProgressBar(width=300, visible=False)
@@ -52,7 +52,13 @@ def main(page: ft.Page):
     def start_parsing(e, page):
         profile_id = profile_id_input.value
         pagesize = 10
-        limit = int(limit_input.value)
+        try:
+            limit = int(limit_input.value)
+        except ValueError:
+            limit = 1000000
+        
+        if limit < 0:
+            limit = 1000000
 
         loading_indicator.visible = True
         total_comments_text.value = ""
@@ -63,10 +69,12 @@ def main(page: ft.Page):
         def run_parsing():
             nonlocal profile_id, pagesize, limit
             start_time = time.time()
-            comments = parse_steam_comments(profile_id, pagesize, limit)
+            if not profile_id.isdigit():
+                profile_id = customurl_to_steamid64(profile_id)
+            comments, pos_final, neg_final, neu_final = parse_steam_comments(profile_id, pagesize, limit)
             loading_indicator.visible = False
             if comments:
-                total_comments_text.value = f"Total Comments: {len(comments)}"
+                total_comments_text.value = f"Total Comments: {len(comments)}. Positive: {pos_final}%. Negative: {neg_final}%. Neutral: {neu_final}%"
                 export_button.disabled = False
                 display_comments(comments)
                 end_time = time.time()
@@ -79,11 +87,13 @@ def main(page: ft.Page):
         threading.Thread(target=run_parsing).start()
 
     def export_to_excel_file():
-        comments = parse_steam_comments(profile_id_input.value, 10, limit_input.value)
+        if not profile_id.isdigit():
+            profile_id = customurl_to_steamid64(profile_id)
+        comments, _, _, _ = parse_steam_comments(profile_id_input.value, 10, int(limit_input.value))
         export_to_excel(comments)
 
     def display_comments(comments):
-        for comment in comments:
+        for comment, sentiment in comments:
             chat_list.controls.append(Comment(Message(comment['username'], comment['time'], comment['comment'], comment['avatar_url'])))
         page.update()
 
